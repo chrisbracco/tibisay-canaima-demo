@@ -1005,7 +1005,7 @@ html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-heigh
   .stk:not(.stk-hero){top:var(--stk-top,84px)}
   .stk > section:not(.hero){max-height:none!important;overflow:visible!important;box-shadow:0 -4px 14px rgba(40,52,72,.10),inset 0 1px 0 rgba(255,255,255,.9)}
   .stk > section.deck{will-change:auto}
-  .stk > .deck-shade{background:#E6E9ED}
+  .stk > .deck-shade{background:var(--bg)}
   .stk > .deck-shade,.stk > section.deck ~ .deck-shade{will-change:auto}
   html.scrolling .wa-fab__ic::before{animation-play-state:paused}
 }
@@ -2038,7 +2038,7 @@ html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-heigh
     if (!isDeck[i]) { isDeck[i] = true; c.classList.add('deck'); }
     // Escala y desplazamiento iguales en la tarjeta y en su cara lisa; la cara opaca va tapando el contenido a medida que la cubren
     var ty = -up - LIFT * p, sc = 1 - (1 - S_MIN) * p, op = Math.min(1, p * 1.25);
-    if (tmq.matches) { sh.style.opacity = op.toFixed(3); return; }  // tactil: solo la cara lisa, sin transforms
+    if (tmq.matches) { sh.style.opacity = Math.max(0, Math.min(1, (p - .7) / .17)).toFixed(3); return; }  // tactil: nitida hasta casi cubierta, luego se tapa del todo
     c.style.visibility = sh.style.visibility = hid ? 'hidden' : '';
     if (G) { qy[i](ty); qsx[i](sc); qsy[i](sc); qo[i](op); qhy[i](ty); qhs[i](sc); }
     else {
