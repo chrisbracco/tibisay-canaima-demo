@@ -10,7 +10,8 @@
 <title>Tibisay Hoteles · Propuesta C&amp;Co</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Instrument+Serif&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Instrument+Serif&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Instrument+Serif&display=swap"></noscript>
 <style>
 /*
   Identidad C&Co (propuesta)
@@ -876,8 +877,8 @@ html:not(.js) .journey li[data-for="deal"]{animation:hx-j3 16.5s infinite both}
 @supports (position:sticky){
 @media screen and (prefers-reduced-motion:no-preference){
   .stk{overflow-anchor:none;position:sticky;top:calc(96px + var(--i,0)*14px)}
-  .stk > section{background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(244,245,247,.98) 260px);}
-  .stk > section:not(.hero){max-height:calc(100vh - 112px);max-height:calc(100dvh - 112px);overflow-y:auto;border-top:1px solid var(--glass-edge);border-radius:26px 26px 0 0;box-shadow:0 -18px 44px rgba(40,52,72,.12),inset 0 1px 0 rgba(255,255,255,.9)}
+  .stk > section{background:#F4F5F7 linear-gradient(180deg,#FEFEFF,#F4F5F7 260px);}
+  .stk > section:not(.hero){max-height:calc(100vh - 112px - var(--i,0)*14px);max-height:calc(100dvh - 112px - var(--i,0)*14px);overflow-y:auto;border-top:1px solid var(--glass-edge);border-radius:26px 26px 0 0;box-shadow:0 -18px 44px rgba(40,52,72,.12),inset 0 1px 0 rgba(255,255,255,.9)}
   .stk > section.hero{background:none;border:0;border-radius:0;box-shadow:none}
   footer{position:relative;z-index:5;background:rgba(244,245,247,.98)}
   /* Efecto baraja: el JS (al final) marca cada tarjeta con .deck y le pone
@@ -974,6 +975,40 @@ html:not(.js) .wa-fab,html:not(.js) .wa-ov{display:none!important}
 }
 @media print{ .wa-chat{height:600px;box-shadow:none;border-radius:0} }
 
+/* ===== Baraja limpia: el velo es una cara lisa opaca que se pone encima de la tarjeta recogida ===== */
+.stk > .deck-shade{position:absolute;left:0;right:0;top:0;bottom:0;z-index:2;border-radius:26px 26px 0 0;background:#C9CDD3;box-shadow:inset 0 1px 0 rgba(255,255,255,.7);opacity:0;pointer-events:none;transform-origin:50% 0;will-change:transform,opacity}
+@media (min-width:1001px){ .stk > .deck-shade{border-radius:34px 34px 0 0} }
+/* Durante el scroll la barra no pierde el vidrio de golpe: queda casi opaca para no dejar ver texto debajo */
+html.scrolling .navbar{background:rgba(250,251,252,.96)}
+/* Con JS (clase que pone el script al medir) todas las tarjetas se pegan a la misma altura; la recogida asoma un filo por encima */
+html.stk-deck .stk:not(.stk-hero){top:110px}
+html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-height:calc(100dvh - 126px)}
+.stk > section.deck{box-shadow:0 -3px 12px rgba(40,52,72,.08),inset 0 1px 0 rgba(255,255,255,.9)}
+@media print{ .deck-shade{display:none!important} }
+/* ===== Rendimiento ===== */
+/* Las tarjetas son opacas: el desenfoque de fondo de los .glass de adentro no se ve y es lo mas caro de pintar. Se quita ahi (la barra lo conserva) */
+@supports (position:sticky){
+@media screen and (prefers-reduced-motion:no-preference){
+  .stk .glass{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(255,255,255,.7)}
+  .stk .glass::after{mix-blend-mode:normal;opacity:.35}
+  .stk > section.deck ~ .deck-shade{will-change:transform,opacity}
+  .stk > .deck-shade{will-change:auto}
+  /* Hero ya desvanecido: ni se pinta ni gasta animaciones */
+  .stk > section.hero.hero-off{visibility:hidden}
+  .stk > section.hero.hero-off *{animation-play-state:paused!important}
+}
+}
+/* Telefonos y pantallas tactiles: las luces de fondo pasan de filtro blur animado a degradado radial estatico (sin repintar capas gigantes) */
+@media (hover:none),(pointer:coarse),(max-width:1000px){
+  .aura i{filter:none;animation:none;will-change:auto;opacity:.55;background:radial-gradient(closest-side,var(--c1),transparent)}
+  .aura i:nth-child(1){--c1:var(--sage);width:90vw;height:90vw;left:-30vw;top:-30vw}
+  .aura i:nth-child(2){--c1:var(--mist);width:90vw;height:90vw;right:-30vw;top:6vh}
+  .aura i:nth-child(3){--c1:var(--sand);width:80vw;height:80vw;left:10vw;top:60vh}
+  .aura i:nth-child(4){--c1:var(--lav);width:70vw;height:70vw;right:-10vw;bottom:-20vw}
+  .glass{-webkit-backdrop-filter:none;backdrop-filter:none}
+  .navbar.glass{-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+  .glass::after{display:none}
+}
 </style>
 </head>
 <body>
@@ -1823,7 +1858,8 @@ html:not(.js) .wa-fab,html:not(.js) .wa-ov{display:none!important}
   }
   var actions = { inbox: inbox, guests: guests };
 
-  var io = new IntersectionObserver(function(entries){
+  var IO = window.IntersectionObserver || function(cb){ this.observe = function(t){ cb([{ isIntersecting: true, target: t }]); }; this.unobserve = function(){}; };
+  var io = new IO(function(entries){
     entries.forEach(function(e){
       if (!e.isIntersecting) return;
       var t = e.target; io.unobserve(t);
@@ -1963,7 +1999,8 @@ html:not(.js) .wa-fab,html:not(.js) .wa-ov{display:none!important}
   var heroSec = cards[0] || null;
   var S_MIN = .9, LIFT = 0, DARK = .22;
   var N = [], H = [], T = [], P = [], B = 0, VH = 0;
-  var shades = [], isDeck = [], qy = [], qsx = [], qsy = [], qo = [];
+  var shades = [], isDeck = [], qy = [], qsx = [], qsy = [], qo = [], qhy = [], qhs = [], DY = [], PN = [], HD = [];
+  var SHOW = 1, STEP = 14;  // filos de tarjeta recogida que asoman detras de la actual, y desfase (px) entre tarjetas
   var y = win.pageYOffset || 0, dirty = true, motion = false, raf = 0, scrolling = false, scrollT = 0;
   var heroTween = null, heroDead = false, heroHp = -1;
   var fadeStart = 0;  // scroll en el que el hero empieza a desvanecerse (0 si cabe en pantalla)
@@ -1972,38 +2009,49 @@ html:not(.js) .wa-fab,html:not(.js) .wa-ov{display:none!important}
   for (var k = 1; k < n - 1; k++) {
     var sh = doc.createElement('i');
     sh.className = 'deck-shade'; sh.setAttribute('aria-hidden', 'true');
-    cards[k].appendChild(sh);
-    shades[k] = sh; isDeck[k] = false; P[k] = 0;
-    if (G) { qy[k] = G.quickSetter(cards[k], 'y', 'px'); qsx[k] = G.quickSetter(cards[k], 'scaleX'); qsy[k] = G.quickSetter(cards[k], 'scaleY'); qo[k] = G.quickSetter(sh, 'opacity'); }
+    wraps[k].appendChild(sh);
+    shades[k] = sh; isDeck[k] = false; P[k] = 0; DY[k] = 0; HD[k] = false;
+    if (G) { qy[k] = G.quickSetter(cards[k], 'y', 'px'); qsx[k] = G.quickSetter(cards[k], 'scaleX'); qsy[k] = G.quickSetter(cards[k], 'scaleY'); qo[k] = G.quickSetter(sh, 'opacity'); qhy[k] = G.quickSetter(sh, 'y', 'px'); qhs[k] = G.quickSetter(sh, 'scale'); }
   }
 
-  function apply(i, p){
+  function apply(i, p, up, hid){
     var c = cards[i], sh = shades[i];
-    if (p === 0) {
-      if (G) { qy[i](0); qsx[i](1); qsy[i](1); qo[i](0); }
-      c.style.transform = ''; sh.style.opacity = '';
+    if (p === 0 && !up) {
+      if (G) { qy[i](0); qsx[i](1); qsy[i](1); qo[i](0); qhy[i](0); qhs[i](1); }
+      c.style.transform = ''; sh.style.opacity = ''; sh.style.transform = ''; c.style.visibility = ''; sh.style.visibility = '';
       if (isDeck[i]) { isDeck[i] = false; c.classList.remove('deck'); }
       return;
     }
     if (!isDeck[i]) { isDeck[i] = true; c.classList.add('deck'); }
-    var ty = -LIFT * p, sc = 1 - (1 - S_MIN) * p, op = DARK * p;
-    if (G) { qy[i](ty); qsx[i](sc); qsy[i](sc); qo[i](op); }
-    else { c.style.transform = 'translate3d(0,' + ty.toFixed(2) + 'px,0) scale(' + sc.toFixed(4) + ')'; sh.style.opacity = op.toFixed(3); }
+    // Escala y desplazamiento iguales en la tarjeta y en su cara lisa; la cara opaca va tapando el contenido a medida que la cubren
+    var ty = -up - LIFT * p, sc = 1 - (1 - S_MIN) * p, op = Math.min(1, p * 1.25);
+    c.style.visibility = sh.style.visibility = hid ? 'hidden' : '';
+    if (G) { qy[i](ty); qsx[i](sc); qsy[i](sc); qo[i](op); qhy[i](ty); qhs[i](sc); }
+    else {
+      var tr = 'translate3d(0,' + ty.toFixed(2) + 'px,0) scale(' + sc.toFixed(4) + ')';
+      c.style.transform = tr; sh.style.transform = tr; sh.style.opacity = op.toFixed(3);
+    }
   }
-  function clearDeck(){ for (var i = 1; i < n - 1; i++) { if (P[i] !== 0 || isDeck[i]) { P[i] = 0; apply(i, 0); } } }
+  function clearDeck(){ for (var i = 1; i < n - 1; i++) { if (P[i] !== 0 || DY[i] || isDeck[i]) { P[i] = 0; DY[i] = 0; apply(i, 0, 0, false); } } }
 
   // Solo lee numeros ya medidos: nada de layout dentro del tick
   function deck(){
-    var i, p, tI, tN, ov, ref;
+    var i, p, tI, tN, ov, ref, d = 0, up, hid;
     for (i = 1; i < n - 1; i++) {
       tI = Math.min(Math.max(N[i] - y, T[i]), B - H[i] - y);
       tN = Math.min(Math.max(N[i + 1] - y, T[i + 1]), B - H[i + 1] - y);
       ov = Math.min(tI + H[i], VH) - Math.max(tN, 0);
       ref = Math.min(H[i], H[i + 1], VH);
       p = ref > 0 ? ov / ref : 0;
-      p = Math.round(Math.max(0, Math.min(1, p)) * 1000) / 1000;
-      if (p === P[i]) continue;
-      P[i] = p; apply(i, p);
+      PN[i] = Math.round(Math.max(0, Math.min(1, p)) * 1000) / 1000;
+    }
+    // Profundidad = cuantas tarjetas hay encima: la recogida sube STEP px (un filo) y las de mas atras se alinean con ella y se ocultan
+    for (i = n - 2; i >= 1; i--) {
+      d += PN[i];
+      up = Math.round(Math.min(d, SHOW) * STEP * 10) / 10;
+      hid = d >= SHOW + 1;
+      if (PN[i] === P[i] && up === DY[i] && hid === HD[i]) continue;
+      P[i] = PN[i]; DY[i] = up; HD[i] = hid; apply(i, PN[i], up, hid);
     }
   }
   // Sin ScrollTrigger: el mismo desvanecido a mano
@@ -2014,7 +2062,7 @@ html:not(.js) .wa-fab,html:not(.js) .wa-ov{display:none!important}
     heroHp = hp;
     heroSec.style.opacity = (1 - hp).toFixed(3);
     heroSec.style.transform = 'translate3d(0,' + (-24 * hp).toFixed(1) + 'px,0)';
-    heroSec.style.pointerEvents = hp > .985 ? 'none' : '';
+    heroSec.style.pointerEvents = hp > .985 ? 'none' : ''; heroSec.classList.toggle('hero-off', hp > .985);
   }
   function tick(){
     if (!motion || !dirty) return;
@@ -2024,13 +2072,13 @@ html:not(.js) .wa-fab,html:not(.js) .wa-ov{display:none!important}
   }
   function heroSide(self){
     var d = self.progress > .985;
-    if (d !== heroDead) { heroDead = d; heroSec.style.pointerEvents = d ? 'none' : ''; }
+    if (d !== heroDead) { heroDead = d; heroSec.style.pointerEvents = d ? 'none' : ''; heroSec.classList.toggle('hero-off', d); }
   }
   function heroKill(){
     if (heroTween) { if (heroTween.scrollTrigger) heroTween.scrollTrigger.kill(); heroTween.kill(); heroTween = null; }
     if (heroSec) {
       if (G) G.set(heroSec, { clearProps: 'opacity,transform' }); else { heroSec.style.opacity = ''; heroSec.style.transform = ''; }
-      heroSec.style.pointerEvents = '';
+      heroSec.style.pointerEvents = ''; heroSec.classList.remove('hero-off');
     }
     heroDead = false; heroHp = -1;
   }
@@ -2051,6 +2099,7 @@ html:not(.js) .wa-fab,html:not(.js) .wa-ov{display:none!important}
   function measure(){
     VH = win.innerHeight || html.clientHeight;
     var ok = canStick && !mq.matches && !printing && n > 2 && win.getComputedStyle(wraps[1]).position === 'sticky';
+    html.classList.toggle('stk-deck', ok);
     if (!ok) { motion = false; fadeStart = 0; clearDeck(); heroKill(); return; }
     html.classList.add('stk-flat');
     var sy = win.pageYOffset, i, r;
@@ -2061,7 +2110,7 @@ html:not(.js) .wa-fab,html:not(.js) .wa-ov{display:none!important}
     fadeStart = Math.max(0, Math.round(N[0] - T[0]));
     wraps[0].style.setProperty('--hero-top', T[0] + 'px');
     for (i = 1; i < n; i++) T[i] = parseFloat(win.getComputedStyle(wraps[i]).top) || 0;
-    for (i = 1; i < n - 1; i++) P[i] = -1;
+    for (i = 1; i < n - 1; i++) { P[i] = -1; DY[i] = -1; HD[i] = false; }
     y = sy; dirty = true; motion = true;
   }
   function refresh(){ measure(); heroBuild(); if (!G) req(); fabCheck(); }
@@ -2110,11 +2159,16 @@ html:not(.js) .wa-fab,html:not(.js) .wa-ov{display:none!important}
   }
   if (fab) { fabSync(); }
 
+  var lastS = 0;
+  function endScroll(){
+    var rest = 160 - (win.performance.now() - lastS);
+    if (rest > 10) { scrollT = setTimeout(endScroll, rest); return; }
+    scrolling = false; html.classList.remove('scrolling');
+  }
   win.addEventListener('scroll', function(){
     y = win.pageYOffset; dirty = true; fabCheck();
-    if (!scrolling) { scrolling = true; html.classList.add('scrolling'); }
-    clearTimeout(scrollT);
-    scrollT = setTimeout(function(){ scrolling = false; html.classList.remove('scrolling'); }, 160);
+    lastS = win.performance.now();
+    if (!scrolling) { scrolling = true; html.classList.add('scrolling'); scrollT = setTimeout(endScroll, 160); }
     if (!G) req();
   }, { passive: true });
 
