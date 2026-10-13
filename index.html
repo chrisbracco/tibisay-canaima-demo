@@ -878,7 +878,7 @@ html:not(.js) .journey li[data-for="deal"]{animation:hx-j3 16.5s infinite both}
 @media screen and (prefers-reduced-motion:no-preference){
   .stk{overflow-anchor:none;position:sticky;top:calc(96px + var(--i,0)*14px)}
   .stk > section{background:#F4F5F7 linear-gradient(180deg,#FEFEFF,#F4F5F7 260px);}
-  .stk > section:not(.hero){max-height:calc(100vh - 112px - var(--i,0)*14px);max-height:calc(100dvh - 112px - var(--i,0)*14px);overflow-y:auto;border-top:1px solid var(--glass-edge);border-radius:26px 26px 0 0;box-shadow:0 -18px 44px rgba(40,52,72,.12),inset 0 1px 0 rgba(255,255,255,.9)}
+  .stk > section:not(.hero){max-height:calc(100vh - 112px - var(--i,0)*14px);max-height:calc(100svh - 112px - var(--i,0)*14px);overflow-y:auto;border-top:1px solid var(--glass-edge);border-radius:26px 26px 0 0;box-shadow:0 -18px 44px rgba(40,52,72,.12),inset 0 1px 0 rgba(255,255,255,.9)}
   .stk > section.hero{background:none;border:0;border-radius:0;box-shadow:none}
   footer{position:relative;z-index:5;background:rgba(244,245,247,.98)}
   /* Efecto baraja: el JS (al final) marca cada tarjeta con .deck y le pone
@@ -982,7 +982,7 @@ html:not(.js) .wa-fab,html:not(.js) .wa-ov{display:none!important}
 html.scrolling .navbar{background:rgba(250,251,252,.96)}
 /* Con JS (clase que pone el script al medir) todas las tarjetas se pegan a la misma altura; la recogida asoma un filo por encima */
 html.stk-deck .stk:not(.stk-hero){top:110px}
-html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-height:calc(100dvh - 126px)}
+html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-height:calc(100svh - 126px)}
 .stk > section.deck{box-shadow:0 -3px 12px rgba(40,52,72,.08),inset 0 1px 0 rgba(255,255,255,.9)}
 @media print{ .deck-shade{display:none!important} }
 /* ===== Rendimiento ===== */
@@ -996,6 +996,16 @@ html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-heigh
   /* Hero ya desvanecido: ni se pinta ni gasta animaciones */
   .stk > section.hero.hero-off{visibility:hidden}
   .stk > section.hero.hero-off *{animation-play-state:paused!important}
+}
+}
+/* Pantallas tactiles: baraja solo con CSS (sticky + tarjetas opacas). Sin transformaciones hechas por JS, que van un frame atras del scroll
+   del navegador y producian parpadeos al subir y bajar. Cada tarjeta recogida asoma un filo de 6px, liso, sin texto */
+@supports (position:sticky){
+@media screen and (prefers-reduced-motion:no-preference) and (hover:none) and (pointer:coarse){
+  .stk:not(.stk-hero){top:calc(90px + var(--i,0)*6px)}
+  .stk > section:not(.hero){max-height:calc(100vh - 100px - var(--i,0)*6px);max-height:calc(100svh - 100px - var(--i,0)*6px);box-shadow:0 -4px 14px rgba(40,52,72,.10),inset 0 1px 0 rgba(255,255,255,.9)}
+  .stk:not(.stk-hero)::before{content:"";position:absolute;left:0;right:0;top:0;height:14px;z-index:1;pointer-events:none;background:#FEFEFF;border-radius:26px 26px 0 0;box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+  html.scrolling .wa-fab__ic::before{animation-play-state:paused}
 }
 }
 /* Telefonos y pantallas tactiles: las luces de fondo pasan de filtro blur animado a degradado radial estatico (sin repintar capas gigantes) */
@@ -1987,6 +1997,7 @@ html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-heigh
   var ST = (G && typeof ScrollTrigger !== 'undefined') ? ScrollTrigger : null;
   if (ST) { try { G.registerPlugin(ST); ST.config({ ignoreMobileResize: true }); } catch (e) { ST = null; } }
   var mq = win.matchMedia('(prefers-reduced-motion: reduce)');
+  var tmq = win.matchMedia('(hover: none) and (pointer: coarse)');  // pantalla tactil: baraja solo CSS
   var canStick = !!(win.CSS && CSS.supports && CSS.supports('position', 'sticky'));
   var printing = false;
   if (!G) html.classList.add('fx-css');
@@ -2067,7 +2078,7 @@ html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-heigh
   function tick(){
     if (!motion || !dirty) return;
     dirty = false;
-    deck();
+    if (!tmq.matches) deck();
     if (!heroTween) heroFallback();
   }
   function heroSide(self){
@@ -2099,7 +2110,7 @@ html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-heigh
   function measure(){
     VH = win.innerHeight || html.clientHeight;
     var ok = canStick && !mq.matches && !printing && n > 2 && win.getComputedStyle(wraps[1]).position === 'sticky';
-    html.classList.toggle('stk-deck', ok);
+    html.classList.toggle('stk-deck', ok && !tmq.matches);
     if (!ok) { motion = false; fadeStart = 0; clearDeck(); heroKill(); return; }
     html.classList.add('stk-flat');
     var sy = win.pageYOffset, i, r;
@@ -2111,6 +2122,7 @@ html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-heigh
     wraps[0].style.setProperty('--hero-top', T[0] + 'px');
     for (i = 1; i < n; i++) T[i] = parseFloat(win.getComputedStyle(wraps[i]).top) || 0;
     for (i = 1; i < n - 1; i++) { P[i] = -1; DY[i] = -1; HD[i] = false; }
+    if (tmq.matches) clearDeck();
     y = sy; dirty = true; motion = true;
   }
   function refresh(){ measure(); heroBuild(); if (!G) req(); fabCheck(); }
@@ -2127,6 +2139,7 @@ html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-heigh
   win.addEventListener('load', schedule);
   if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(schedule);
   onMQ(function(){ refresh(); fabSync(); });
+  if (tmq.addEventListener) tmq.addEventListener('change', refresh);
   win.addEventListener('beforeprint', function(){ printing = true; measure(); });
   win.addEventListener('afterprint', function(){ printing = false; refresh(); });
   if (G) G.ticker.add(tick);
