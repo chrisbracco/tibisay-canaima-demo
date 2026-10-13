@@ -998,13 +998,15 @@ html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-heigh
   .stk > section.hero.hero-off *{animation-play-state:paused!important}
 }
 }
-/* Pantallas tactiles: baraja solo con CSS (sticky + tarjetas opacas). Sin transformaciones hechas por JS, que van un frame atras del scroll
-   del navegador y producian parpadeos al subir y bajar. Cada tarjeta recogida asoma un filo de 6px, liso, sin texto */
+/* Pantallas tactiles: sin scroll interno. Cada ficha se lee completa con el scroll de la pagina y se queda fija cuando su final llega
+   al borde de abajo (--stk-top lo calcula el JS segun su alto); la siguiente entra encima y la recoge. Solo se apaga el contenido de atras */
 @supports (position:sticky){
 @media screen and (prefers-reduced-motion:no-preference) and (hover:none) and (pointer:coarse){
-  .stk:not(.stk-hero){top:calc(90px + var(--i,0)*6px)}
-  .stk > section:not(.hero){max-height:calc(100vh - 100px - var(--i,0)*6px);max-height:calc(100svh - 100px - var(--i,0)*6px);box-shadow:0 -4px 14px rgba(40,52,72,.10),inset 0 1px 0 rgba(255,255,255,.9)}
-  .stk:not(.stk-hero)::before{content:"";position:absolute;left:0;right:0;top:0;height:14px;z-index:1;pointer-events:none;background:#FEFEFF;border-radius:26px 26px 0 0;box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+  .stk:not(.stk-hero){top:var(--stk-top,84px)}
+  .stk > section:not(.hero){max-height:none!important;overflow:visible!important;box-shadow:0 -4px 14px rgba(40,52,72,.10),inset 0 1px 0 rgba(255,255,255,.9)}
+  .stk > section.deck{will-change:auto}
+  .stk > .deck-shade{background:#E6E9ED}
+  .stk > .deck-shade,.stk > section.deck ~ .deck-shade{will-change:auto}
   html.scrolling .wa-fab__ic::before{animation-play-state:paused}
 }
 }
@@ -2008,10 +2010,10 @@ html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-heigh
   var wraps = cards.map(function(c){ return c.parentNode; });
   var n = cards.length;
   var heroSec = cards[0] || null;
-  var S_MIN = .9, LIFT = 0, DARK = .22;
+  var S_MIN = tmq.matches ? 1 : .9, LIFT = 0, DARK = .22;
   var N = [], H = [], T = [], P = [], B = 0, VH = 0;
   var shades = [], isDeck = [], qy = [], qsx = [], qsy = [], qo = [], qhy = [], qhs = [], DY = [], PN = [], HD = [];
-  var SHOW = 1, STEP = 14;  // filos de tarjeta recogida que asoman detras de la actual, y desfase (px) entre tarjetas
+  var SHOW = tmq.matches ? 99 : 1, STEP = tmq.matches ? 0 : 14;  // filos de tarjeta recogida que asoman detras de la actual, y desfase (px) entre tarjetas
   var y = win.pageYOffset || 0, dirty = true, motion = false, raf = 0, scrolling = false, scrollT = 0;
   var heroTween = null, heroDead = false, heroHp = -1;
   var fadeStart = 0;  // scroll en el que el hero empieza a desvanecerse (0 si cabe en pantalla)
@@ -2036,6 +2038,7 @@ html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-heigh
     if (!isDeck[i]) { isDeck[i] = true; c.classList.add('deck'); }
     // Escala y desplazamiento iguales en la tarjeta y en su cara lisa; la cara opaca va tapando el contenido a medida que la cubren
     var ty = -up - LIFT * p, sc = 1 - (1 - S_MIN) * p, op = Math.min(1, p * 1.25);
+    if (tmq.matches) { sh.style.opacity = op.toFixed(3); return; }  // tactil: solo la cara lisa, sin transforms
     c.style.visibility = sh.style.visibility = hid ? 'hidden' : '';
     if (G) { qy[i](ty); qsx[i](sc); qsy[i](sc); qo[i](op); qhy[i](ty); qhs[i](sc); }
     else {
@@ -2078,7 +2081,7 @@ html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-heigh
   function tick(){
     if (!motion || !dirty) return;
     dirty = false;
-    if (!tmq.matches) deck();
+    deck();
     if (!heroTween) heroFallback();
   }
   function heroSide(self){
@@ -2120,6 +2123,7 @@ html.stk-deck .stk > section:not(.hero){max-height:calc(100vh - 126px);max-heigh
     T[0] = Math.min(N[0], VH - H[0]);
     fadeStart = Math.max(0, Math.round(N[0] - T[0]));
     wraps[0].style.setProperty('--hero-top', T[0] + 'px');
+    if (tmq.matches) for (i = 1; i < n; i++) wraps[i].style.setProperty('--stk-top', Math.round(Math.min(84, VH - H[i] - 12)) + 'px');
     for (i = 1; i < n; i++) T[i] = parseFloat(win.getComputedStyle(wraps[i]).top) || 0;
     for (i = 1; i < n - 1; i++) { P[i] = -1; DY[i] = -1; HD[i] = false; }
     if (tmq.matches) clearDeck();
